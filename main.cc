@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     {
         model.ReadModel(modelSource);
     } catch(std::exception& e) {
-        std::cerr << "ERROR: unexpected exception while reading model. Details: '" << e.what() << "'" << std::endl;
+        std::cerr << "ERROR: fatal problem while reading model. Details: '" << e.what() << "'" << std::endl;
         return -1;
     } catch (...) {
         std::cerr << "ERROR: unknown exception while reading model" << std::endl;
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     {
         data.ReadExperimentData(model, dataSource);
     } catch(std::exception& e) {
-        std::cerr << "ERROR: unexpected exception while reading experiment data. Details: '" << e.what() << "'" << std::endl;
+        std::cerr << "ERROR: fatal problem while reading experiment data. Details: '" << e.what() << "'" << std::endl;
         return -1;
     } catch (...) {
         std::cerr << "ERROR: unknown exception while reading experiment data " << std::endl;

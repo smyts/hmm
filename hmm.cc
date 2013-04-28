@@ -1,4 +1,5 @@
 #include <vector>
+#include <stdexcept>
 #include <iostream>
 
 #include "hmm.h"
@@ -50,6 +51,14 @@ void Model::ReadModel(std::istream& modelSource)
         size_t fromInd = stateNameToIndex[stateName];
         size_t toInd   = stateNameToIndex[targetStateName];
 
+        if (fromInd + 1 == nstates) {
+            throw std::domain_error("Transition from the ending state is forbidden");
+        }
+
+        if (toInd == 0) {
+            throw std::domain_error("Transition to the starting state is forbidden");
+        }
+
         transitionProb[fromInd][toInd] = prob;
     }
 
@@ -66,6 +75,10 @@ void Model::ReadModel(std::istream& modelSource)
 
         size_t stateInd = stateNameToIndex[stateName];
         size_t symbolInd = symbolToInd(symbol);
+
+        if (stateInd == 0 || stateInd + 1 == nstates) {
+            throw std::domain_error("Symbol emission from the beginning or the ending states is forbidden");
+        }
 
         stateSymbolProb[stateInd][symbolInd] = prob;
     }

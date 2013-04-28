@@ -1,5 +1,5 @@
 <number of states>
-<space delimited state names>
+<space delimited state names (first one is the starting state, last one - ending state; there must be no symbol emissions from starting and ending states; there must be no transitions to the starting state and from the ending state)>
 <number of different possible symbols (a..z, no more than 26)>
 <number of transitions>
 <state transitions as space delimited one-per-line triples "from to probability"; unmentioned will have zero probability>
