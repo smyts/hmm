@@ -385,4 +385,74 @@ vector<size_t> HMM::Estimation::GetMostProbableStates(
 
     return std::move(mostProbableStates);
 }
+
+vector<vector<size_t> >
+HMM::Estimation::CombineConfusionMatrix(const ExperimentData& realData,
+                                        const vector<size_t>& predictedStates,
+                                        const Model& model)
+{
+    size_t maxtime = predictedStates.size();
+    size_t nstates = model.transitionProb.size();
+    vector<vector<size_t> > confusionMatrix(nstates, vector<size_t> (nstates, 0));
+
+    for (size_t t = 0; t < maxtime; ++t) {
+        size_t predictedInd = predictedStates[t];
+        size_t realInd      = std::get<1>(realData.timeStateSymbol[t]);
+
+        ++confusionMatrix[predictedInd][realInd];
+    }
+
+    return std::move(confusionMatrix);
+}
+
+vector<HMM::Data::PredictionEstimation>
+HMM::Estimation::GetStatePredictionEstimations(const vector<vector<size_t> >& confusionMatrix)
+{
+    size_t nstates = confusionMatrix.size();
+    vector<PredictionEstimation> estimations(nstates);
+    vector<size_t> colSums(nstates, 0);
+    vector<size_t> rowSums(nstates, 0);
+
+    // part: prepare auxiliary columns sums and row sums for further usage
+    for (size_t i = 0; i < nstates; ++i) {
+        for (size_t j = 0; j < nstates; ++j) {
+            rowSums[i] += confusionMatrix[i][j];
+            colSums[i] += confusionMatrix[j][i];
+        }
+    }
+
+    size_t totalObservations = std::accumulate(std::begin(rowSums),
+                                               std::end(rowSums), 0UL);
+
+    // part: calculate prediction estimations for each state
+    for (size_t state = 0; state < nstates; ++state) {
+        estimations[state].truePositives = confusionMatrix[state][state];
+        estimations[state].falsePositives = rowSums[state] - confusionMatrix[state][state];
+
+        // neither predicted to be current state nor its real state is the current one
+        estimations[state].trueNegatives = totalObservations - rowSums[state] - colSums[state] + confusionMatrix[state][state]; 
+        estimations[state].falseNegatives = colSums[state] - confusionMatrix[state][state];
+
+        // calculate f-measure
+        double precision = 0;
+        double recall = 0;
+
+        if (rowSums[state] != 0) {
+            precision = static_cast<double> (confusionMatrix[state][state]) / static_cast<double> (rowSums[state]);
+        }
+
+        if (colSums[state] != 0) {
+            recall = static_cast<double> (confusionMatrix[state][state]) / static_cast<double> (colSums[state]);
+        }
+
+        if (rowSums[state] == 0 && colSums[state] == 0) {
+            estimations[state].fMeasure = 0;
+        } else {
+            estimations[state].fMeasure = 2. * (precision * recall) / (precision + recall);
+        }
+
+    }
+
+    return std::move(estimations);
+}
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< end of Estimation namespace definitions <<<<<<<<<<<<<<<<<<<<

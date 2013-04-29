@@ -57,7 +57,14 @@ namespace HMM
          * Estimation in the form:
          * True positives, False Positives, True Negatives, False Negatives, F-measure
          */
-        typedef std::tuple<size_t, size_t, size_t, size_t, double> PredictionEstimation;
+        struct PredictionEstimation
+        {
+            size_t truePositives;
+            size_t falsePositives;
+            size_t trueNegatives;
+            size_t falseNegatives;
+            double fMeasure;
+        };
     };
 
     namespace Algorithms
@@ -103,11 +110,26 @@ namespace HMM
         using std::vector;
         using std::pair;
 
+        /**
+         * \brief Use forward-backward probabilities to get the most probable state at each step
+         */
         vector<size_t> GetMostProbableStates(
             const vector<vector<pair<double, double> > >& forwardBackwardProb);
 
+        /**
+         * \note
+         * Confusion matrix element[i][j] is the number of elements with the
+         * predicted state i when their real state is j.
+         * It is used as an auxiliary data structure for calculation of various estimations
+         * (true positives and etc., f-measure).
+         */
+        vector<vector<size_t> > CombineConfusionMatrix(const ExperimentData& realData,
+                                                       const vector<size_t>& predictedStates, const Model& model);
+
+        /**
+         * \brief Use confusion matrix to calculate estimations of the prediction results
+         */
         vector<PredictionEstimation>
-        GetStatePredictionEstimations(const ExperimentData& realData,
-                                      const vector<size_t>& predictedStates);
+            GetStatePredictionEstimations(const vector<vector<size_t> >& confusionMatrix);
     };
 };
