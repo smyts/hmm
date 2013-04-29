@@ -75,6 +75,16 @@ int main(int argc, char* argv[])
     std::cout << std::endl;
 
     // section: run and estimate forward-backward predictions
+    std::vector<std::vector<std::pair<double, double> > > forwardBackwardProb =
+        HMM::Algorithms::CalcForwardBackwardProbabiliies(model, data);
+    std::vector<size_t> mostProbableStates =
+        HMM::Estimation::GetMostProbableStates(forwardBackwardProb);
+
+    std::cout << "Most probable states: " << std::endl;
+    for (size_t i = 0; i < mostProbableStates.size(); ++i) {
+        std::cout << mostProbableStates[i] << " ";
+    }
+    std::cout << std::endl;
 
     return 0;
 }

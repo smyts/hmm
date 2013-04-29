@@ -94,14 +94,20 @@ namespace HMM
         CalcForwardBackwardProbabiliies(const Model& model, const ExperimentData& data);
     };
 
-    namespace Estimations
+    namespace Estimation
     {
         using Data::Model;
         using Data::ExperimentData;
         using Data::PredictionEstimation;
 
-        std::vector<PredictionEstimation>
+        using std::vector;
+        using std::pair;
+
+        vector<size_t> GetMostProbableStates(
+            const vector<vector<pair<double, double> > >& forwardBackwardProb);
+
+        vector<PredictionEstimation>
         GetStatePredictionEstimations(const ExperimentData& realData,
-                                      const std::vector<size_t>& predictedStates);
+                                      const vector<size_t>& predictedStates);
     };
 };

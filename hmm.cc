@@ -362,3 +362,27 @@ HMM::Algorithms::CalcForwardBackwardProbabiliies(const Model& model, const Exper
     return std::move(forwardBackwardProbability);
 }
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< end of Algorithms namespace definitions <<<<<<<<<<<<<<<<<<<<
+
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Estimation namespace definitions >>>>>>>>>>>>>>>>>>>>>>>>>>>
+vector<size_t> HMM::Estimation::GetMostProbableStates(
+    const vector<vector<pair<double, double> > >& forwardBackwardProb)
+{
+    size_t maxtime = forwardBackwardProb.size();
+    vector<size_t> mostProbableStates;
+
+    for (size_t t = 0; t < maxtime; ++t) {
+        size_t mostProbableState =
+            std::distance(std::begin(forwardBackwardProb[t]),
+                          std::max_element(std::begin(forwardBackwardProb[t]),
+                                           std::end(forwardBackwardProb[t]),
+                                           [](const pair<double, double>& prev,
+                                              const pair<double, double>& next)
+                                           {return (prev.first * prev.second <
+                                                    next.first * next.second);}));
+        mostProbableStates.push_back(mostProbableState);
+    }
+
+    return std::move(mostProbableStates);
+}
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< end of Estimation namespace definitions <<<<<<<<<<<<<<<<<<<<
