@@ -1,9 +1,11 @@
 What is it
 ===========
-Simple single-file C++ program that implements data structures for
-hidden markov model and two algorithms (Viterbi for most likely
+Simple C++ program that implements data structures for
+hidden markov model (hmm) and two algorithms (Viterbi for most likely
 sequence of hidden states and forward-backward for caclulating
 forward and backward state probabilities).
+There is also functionality for estimation of the state prediction
+results of both algorithms.
 
 
 Implementation note
@@ -16,20 +18,36 @@ easier to build and run for demonstration purposes.
 Description of files and directories
 ====================================
 * README.md  - this readme file, uses basic markdown markup
-* hmm.cc     - source file of this program
-* model.spec - description of the file format for the hmm model description
-* data.spec  - description of the file format for the hmm experiment data with the corresponding model
-* model/     - directory for the model description files, currently contains only default model and failure tests
+* hmm.h      - header file with declarations of data structures,
+               algorithms and estimation functionality
+* hmm.cc     - source file with implemenation of the hmm.h delcrarations
+* model.spec - description of the file and data format
+               for the hmm model description
+* data.spec  - description of the file and data format
+               for the hmm experiment data with the corresponding model
+* model/     - directory for the model description files,
+               currently contains only default model and failure tests
 * data/      - directory for experiment data, currently contains only default data
-
+* main.cc    - contains code that reads model and experiment data from given files
+               and then runs Virterbi and forward-backward algorithms to use them
+               as the hidden state predictors. The results of this program are
+               the state prediction estimations for both algorithms and all states.
+               Estimation is printed to the standard output and contains
+               True Positives, False Positives, True Negatives, False Negatives
+               and f-measure for each particular state prediction.
 
 Technical stuff
 ===============
 
 Compilation
 -----------
-* Just do it:
+* Just do it from the project directory:
   g++ main.cc hmm.cc -o app -std=c++11 -Wall -Wextra
+
+Run with default example data
+-----------------------------
+* Compile as above and run from the project directory as:
+  ./app models/default.model data/default.data
 
 Simple testing
 --------------
