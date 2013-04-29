@@ -14,6 +14,11 @@ using HMM::Data::Model;
 using HMM::Data::ExperimentData;
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Data namespace definitions >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+/**
+ * \note
+ * Auxiliary functions, for internal usage only.
+ */
 namespace
 {
     /**
@@ -116,8 +121,15 @@ void ExperimentData::ReadExperimentData(const Model& model, std::istream& dataSo
 const double HMM_BEGIN_STATE_PROBABILITY = 1.0;
 const size_t HMM_UNDEFINED_STATE = -1;
 
+/**
+ * \note
+ * Auxiliary functions, for internal usage only.
+ */
 namespace
 {
+    /**
+     * \brief Aux. function to calculate new state probability for the Viterbi algorithm step
+     */
     double CalcNewStateProbability(size_t stepNumber, size_t prevState,
                                    size_t curState, size_t curSymbol, const Model& model,
                                    const vector<vector<double> >& sequenceProbability)
@@ -137,6 +149,9 @@ namespace
                 model.stateSymbolProb[curState][curSymbol]);
     }
 
+    /**
+     * \brief Aux. function to find the best previous state during the Viterbi algorithm step
+     */
     size_t FindBestTransitionSource(size_t stepNumber, size_t curState,
                                     size_t curSymbol, const Model& model,
                                     const vector<vector<double> >& sequenceProbability)
@@ -150,7 +165,9 @@ namespace
         size_t bestPrevState = HMM_UNDEFINED_STATE;
 
         for (size_t prevState = 0; prevState < nstates; ++prevState) {
-            double curProb = CalcNewStateProbability(stepNumber, prevState, curState,curSymbol, model, sequenceProbability);
+            double curProb = CalcNewStateProbability(stepNumber, prevState,
+                                                     curState, curSymbol,
+                                                     model, sequenceProbability);
 
             if (curProb > bestProbValue) {
                 bestProbValue = curProb;
@@ -170,11 +187,23 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
     size_t nstates = model.transitionProb.size();
     size_t maxtime = data.timeStateSymbol.size();
 
-    std::vector<std::vector<double> > sequenceProbability(maxtime,
-                                                          std::vector<double> (nstates, 0));
-    std::vector<std::vector<size_t> > prevSeqState(maxtime,
-                                                   std::vector<size_t> (nstates,
-                                                                        HMM_UNDEFINED_STATE));
+    /**
+     * \note
+     * sequenceProbability[i][j] is the probability of the most probable sequence of states
+     * for 1..i observations for which the last state is j-th
+     */
+    vector<vector<double> > sequenceProbability(maxtime,
+                                                vector<double> (nstates, 0));
+
+    /**
+     * \note
+     * prevSeqState[i][j] is the previous state from which the most probable
+     * sequence (with probability sequenceProbability[i][j]) for 1..i observations with the last
+     * state at j has been formed.
+     * This information will help to recover the whole sequence.
+     */
+    vector<vector<size_t> > prevSeqState(maxtime,
+                                         vector<size_t> (nstates, HMM_UNDEFINED_STATE));
 
     // part: calculate probabilities for Viterbi algorithm using dynamic programming approach
     for (size_t t = 0; t < maxtime; ++t) {
@@ -195,6 +224,8 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
     // part: collect most probable sequence in the reverse order
     vector<size_t> mostProbableSeq;
     ptrdiff_t curStep = maxtime - 1;
+
+    // find the last state of the most probable sequence to start recovery from it
     size_t curState = std::distance(std::begin(sequenceProbability[curStep]),
                                     std::max_element(std::begin(sequenceProbability[curStep]),
                                                      std::end(sequenceProbability[curStep])));
