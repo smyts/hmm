@@ -41,6 +41,10 @@ void Model::ReadModel(std::istream& modelSource)
 
     modelSource >> nstates;
 
+    if (nstates < 2) {
+        throw std::domain_error("There must be at least two states: begin and end");
+    }
+
     for (size_t i = 0; i < nstates; ++i) {
         modelSource >> stateName;
         stateNameToIndex[stateName] = i;
@@ -104,6 +108,10 @@ void ExperimentData::ReadExperimentData(const Model& model, std::istream& dataSo
     string symbol;// supposed to be single character, string is used for simpler reading code
 
     dataSource >> nsteps;
+
+    if (nsteps == 0) {
+        throw std::domain_error("Empty experiment data");
+    }
 
     for (size_t i = 0; i < nsteps; ++i) {
         dataSource >> stepNumber >> stateName >> symbol;
