@@ -178,6 +178,62 @@ namespace
         // there must be at least two states => the result won't be undefined
         return bestPrevState;
     }
+
+    /**
+     * \brief Aux. function to get the cumulative forward step transition probability
+     *
+     * \details
+     * This is used inside forward-backward algorithm at forward probabilities calculation.
+     */
+    double CalcForwardStepProbability(size_t stepNumber, size_t curState,
+                                      const Model& model, const ExperimentData& data,
+                                      const vector<vector<double> >& forwardStateProbability)
+    {
+        size_t nstates = model.transitionProb.size();
+        size_t curSymbol = std::get<2> (data.timeStateSymbol[stepNumber]);
+
+        if (stepNumber == 0) {
+            return model.transitionProb[0][curState] * model.stateSymbolProb[curState][curSymbol];
+        } else {
+            double prevCumulativeProb = 0;
+
+            for (size_t prevState = 0; prevState < nstates; ++prevState) {
+                prevCumulativeProb += (forwardStateProbability[stepNumber - 1][prevState] *
+                                       model.transitionProb[prevState][curState]);
+            }
+
+            return prevCumulativeProb * model.stateSymbolProb[curState][curSymbol];
+        }
+    }
+
+    /**
+     * \brief Aux. function to get the cumulative probability for the backward step
+     *
+     * \details
+     * This is used inside forward-backward algorithm at backward probabilities calculation.
+     */
+    double CalcBackwardStepProbability(size_t stepNumber, size_t curState,
+                                       const Model& model, const ExperimentData& data,
+                                       const vector<vector<double> >& backwardStateProbability)
+    {
+        size_t nstates = model.transitionProb.size();
+        size_t maxtime = data.timeStateSymbol.size();
+
+        if (stepNumber + 1 == maxtime) {
+            return 1.; // probability to describe empty sequence is 1.
+        } else {
+            size_t nextSymbol = std::get<2> (data.timeStateSymbol[stepNumber + 1]);
+            double nextCumulativeProb = 0.;
+
+            for (size_t nextState = 0; nextState < nstates; ++nextState) {
+                nextCumulativeProb += (model.transitionProb[curState][nextState] *
+                                       model.stateSymbolProb[nextState][nextSymbol] *
+                                       backwardStateProbability[stepNumber + 1][nextState]);
+            }
+
+            return nextCumulativeProb;
+        }
+    }
 };
 
 vector<size_t>
@@ -246,9 +302,55 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
 vector<vector<pair<double, double> > >
 HMM::Algorithms::CalcForwardBackwardProbabiliies(const Model& model, const ExperimentData& data)
 {
-    // TODO: implement
-    // TODO: add inverse stateInd to stateName conversions
+    size_t nstates = model.transitionProb.size();
+    size_t maxtime = data.timeStateSymbol.size();
+
+    /**
+     * \note
+     * forwardStateProbability[i][j] is the probability that any hidden sequence (with
+     * the hidden state at i-th step equal to j) describes first 1..i observations.
+     */
+    vector<vector<double> > forwardStateProbability(maxtime, vector<double> (nstates, 0));
+
+    // part: calculate forward probabilities of the forward-backward algorithm
+    for (size_t t = 0; t < maxtime; ++t) {
+        for (size_t curState = 0; curState < nstates; ++curState) {
+            double cumulativePrevProbability =
+                CalcForwardStepProbability(t, curState, model, data, forwardStateProbability);
+
+            forwardStateProbability[t][curState] = cumulativePrevProbability;
+        }
+    }
+
+    /**
+     * \note
+     * backwardStateProbability[i][j] is the probability that any hidden sequence (with
+     * the hidden state at i+1 step equal to j) describes last i+1..T observations.
+     */
+    vector<vector<double> > backwardStateProbability(maxtime, vector<double> (nstates, 0.));
+
+    // part: calculate backward probabilities of the forward-backward algorithm
+    for (ptrdiff_t t = maxtime - 1; t >= 0; --t) {
+        for (size_t curState = 0; curState < nstates; ++curState) {
+            double cumulativeNextProbability =
+                CalcBackwardStepProbability(t, curState, model, data, backwardStateProbability);
+
+            backwardStateProbability[t][curState] = cumulativeNextProbability;
+        }
+    }
+
+    // part: return joined results
+    vector<vector<pair<double, double> > > forwardBackwardProbability
+        (maxtime, vector<pair<double, double> > (nstates, pair<double, double>()));
+
+    for (size_t t = 0; t < maxtime; ++t) {
+        for (size_t curState = 0; curState < nstates; ++curState) {
+            forwardBackwardProbability[t][curState] =
+                pair<double, double>(forwardStateProbability[t][curState],
+                                     backwardStateProbability[t][curState]);
+        }
+    }
+
+    return std::move(forwardBackwardProbability);
 }
-
-
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< end of Algorithms namespace definitions <<<<<<<<<<<<<<<<<<<<
