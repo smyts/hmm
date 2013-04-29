@@ -9,6 +9,19 @@ void showUsage(std::string programName)
               << " path_to_model path_to_data " << std::endl;
 }
 
+void printPredictionEstimation(size_t stateInd,
+                               const HMM::Data::PredictionEstimation& estimation,
+                               const HMM::Data::Model& model)
+{
+    std::cout << "State " << model.stateIndexToName[stateInd]
+              << " => "
+              << "True Positives=" << estimation.truePositives << ", "
+              << "False Positives=" << estimation.falsePositives << ", "
+              << "True Negatives=" << estimation.trueNegatives << ", "
+              << "False Negatives=" << estimation.falseNegatives << ", "
+              << "f-measure=" << estimation.fMeasure << '\n';
+}
+
 int main(int argc, char* argv[])
 {
     // section: check arguments and prepare input streams
@@ -66,25 +79,38 @@ int main(int argc, char* argv[])
     }
 
     // secton: run and estimate viterbi predictions
-    std::vector<size_t> mostProbableSeq = HMM::Algorithms::FindMostProbableStateSequence(model, data);
+    std::vector<size_t> mostProbableSeq =
+        HMM::Algorithms::FindMostProbableStateSequence(model, data);
+    std::vector<std::vector<size_t> > confusionMatrix =
+        HMM::Estimation::CombineConfusionMatrix(data, mostProbableSeq, model);
+    std::vector<HMM::Data::PredictionEstimation> estimations =
+        HMM::Estimation::GetStatePredictionEstimations(confusionMatrix);
 
-    std::cout << "Most probable sequence: " << std::endl;
-    for (size_t i = 0; i < mostProbableSeq.size(); ++i) {
-        std::cout << mostProbableSeq[i] << " ";
+    std::cout << "Viterbi algorithm state prediction estimations:\n";
+
+    // skip first and last states (begin and end)
+    for (size_t i = 1; i + 1 < estimations.size(); ++i) {
+        printPredictionEstimation(i, estimations[i], model);
     }
-    std::cout << std::endl;
+
+    std::cout << "\n";
 
     // section: run and estimate forward-backward predictions
     std::vector<std::vector<std::pair<double, double> > > forwardBackwardProb =
         HMM::Algorithms::CalcForwardBackwardProbabiliies(model, data);
     std::vector<size_t> mostProbableStates =
         HMM::Estimation::GetMostProbableStates(forwardBackwardProb);
+    confusionMatrix = HMM::Estimation::CombineConfusionMatrix(data, mostProbableStates, model);
+    estimations = HMM::Estimation::GetStatePredictionEstimations(confusionMatrix);
 
-    std::cout << "Most probable states: " << std::endl;
-    for (size_t i = 0; i < mostProbableStates.size(); ++i) {
-        std::cout << mostProbableStates[i] << " ";
+    std::cout << "Forward-backward algorithm state prediction estimations:\n";
+
+    // skip first and last states (begin and end)
+    for (size_t i = 1; i + 1 < estimations.size(); ++i) {
+        printPredictionEstimation(i, estimations[i], model);
     }
-    std::cout << std::endl;
+
+    std::cout << "\n";
 
     return 0;
 }

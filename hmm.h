@@ -27,6 +27,10 @@ namespace HMM
             /// conversion of state name string to state index
             std::map<std::string, size_t> stateNameToIndex;
 
+            /// inverse conversion
+            std::vector<std::string> stateIndexToName;
+
+
             /// element[i][j] here is the probability of transition from state i to j
             /// very first state is the begin state, the last is the end state
             std::vector<std::vector<double> > transitionProb;

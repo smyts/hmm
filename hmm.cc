@@ -48,6 +48,7 @@ void Model::ReadModel(std::istream& modelSource)
     for (size_t i = 0; i < nstates; ++i) {
         modelSource >> stateName;
         stateNameToIndex[stateName] = i;
+        stateIndexToName.push_back(stateName);
     }
 
     // part: alphabet reading
