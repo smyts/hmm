@@ -6,11 +6,14 @@
 
 #include "hmm.h"
 
+using std::vector;
+using std::string;
+using std::pair;
 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Data namespace definitions >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 using HMM::Data::Model;
 using HMM::Data::ExperimentData;
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Data namespace definitions >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 namespace
 {
     /**
@@ -19,7 +22,7 @@ namespace
      * \note
      * String assumed to be non-empty and symbol[0] is supposed to be in a..z ascii.
      */
-    char symbolToInd(const std::string& symbol)
+    char symbolToInd(const string& symbol)
     {
         return symbol[0] - 'a';
     }
@@ -29,7 +32,7 @@ void Model::ReadModel(std::istream& modelSource)
 {
     // part: states reading
     size_t nstates;
-    std::string stateName;
+    string stateName;
 
     modelSource >> nstates;
 
@@ -43,9 +46,9 @@ void Model::ReadModel(std::istream& modelSource)
 
     // part: transitions reading
     size_t ntransitions;
-    std::string targetStateName;
+    string targetStateName;
 
-    transitionProb.assign(nstates, std::vector<double> (nstates, 0));
+    transitionProb.assign(nstates, vector<double> (nstates, 0));
     modelSource >> ntransitions;
 
     for (size_t i = 0; i < ntransitions; ++i) {
@@ -68,9 +71,9 @@ void Model::ReadModel(std::istream& modelSource)
 
     // part: state-symbol emission probabilities reading
     size_t nemissions;
-    std::string symbol; // supposed to be single character, string is used for simpler reading code
+    string symbol; // supposed to be single character, string is used for simpler reading code
 
-    stateSymbolProb.assign(nstates, std::vector<double> (alphabetSize, 0));
+    stateSymbolProb.assign(nstates, vector<double> (alphabetSize, 0));
     modelSource >> nemissions;
 
     for (size_t i = 0; i < nemissions; ++i) {
@@ -92,8 +95,8 @@ void ExperimentData::ReadExperimentData(const Model& model, std::istream& dataSo
 {
     size_t nsteps;
     size_t stepNumber;
-    std::string stateName;
-    std::string symbol;// supposed to be single character, string is used for simpler reading code
+    string stateName;
+    string symbol;// supposed to be single character, string is used for simpler reading code
 
     dataSource >> nsteps;
 
@@ -116,8 +119,8 @@ const size_t HMM_UNDEFINED_STATE = -1;
 namespace
 {
     double CalcNewStateProbability(size_t stepNumber, size_t prevState,
-                                   size_t curState, char curSymbol, const Model& model,
-                                   const std::vector<std::vector<double> >& sequenceProbability)
+                                   size_t curState, size_t curSymbol, const Model& model,
+                                   const vector<vector<double> >& sequenceProbability)
     {
         double prevProbability = 1.;
 
@@ -136,7 +139,7 @@ namespace
 
     size_t FindBestTransitionSource(size_t stepNumber, size_t curState,
                                     size_t curSymbol, const Model& model,
-                                    const std::vector<std::vector<double> >& sequenceProbability)
+                                    const vector<vector<double> >& sequenceProbability)
     {
         if (stepNumber == 0) {
             return 0;
@@ -160,7 +163,7 @@ namespace
     }
 };
 
-std::vector<size_t>
+vector<size_t>
 HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const ExperimentData& data)
 {
     // part: prepare and initialize data structures for calculations
@@ -177,8 +180,12 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
     for (size_t t = 0; t < maxtime; ++t) {
         for (size_t curState = 0; curState < nstates; ++curState) {
             size_t curSymbol = std::get<2> (data.timeStateSymbol[t]);
-            size_t bestPrevState = FindBestTransitionSource(t, curState, curSymbol, model, sequenceProbability);
-            double bestProbValue = CalcNewStateProbability(t, bestPrevState, curState, curSymbol, model, sequenceProbability);
+            size_t bestPrevState = FindBestTransitionSource(t, curState,
+                                                            curSymbol, model,
+                                                            sequenceProbability);
+            double bestProbValue = CalcNewStateProbability(t, bestPrevState,
+                                                           curState, curSymbol,
+                                                           model, sequenceProbability);
 
             sequenceProbability[t][curState] = bestProbValue;
             prevSeqState[t][curState] = bestPrevState;
@@ -186,11 +193,11 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
     }
 
     // part: collect most probable sequence in the reverse order
-    std::vector<size_t> mostProbableSeq;
+    vector<size_t> mostProbableSeq;
     ptrdiff_t curStep = maxtime - 1;
     size_t curState = std::distance(std::begin(sequenceProbability[curStep]),
                                     std::max_element(std::begin(sequenceProbability[curStep]),
-                                                std::end(sequenceProbability[curStep])));
+                                                     std::end(sequenceProbability[curStep])));
 
     for (; curStep > 0; --curStep) {
         curState = prevSeqState[curStep][curState];
@@ -199,14 +206,13 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
 
     mostProbableSeq.push_back(curState);
 
-
     // part: restore correct order and return results
     std::reverse(std::begin(mostProbableSeq), std::end(mostProbableSeq));
 
     return std::move(mostProbableSeq);
 }
 
-std::vector<std::pair<double, double> >
+vector<vector<pair<double, double> > >
 HMM::Algorithms::CalcForwardBackwardProbabiliies(const Model& model, const ExperimentData& data)
 {
     // TODO: implement

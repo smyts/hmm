@@ -90,7 +90,7 @@ namespace HMM
          *
          * \returns vector result[t], where result[t].first is a(t, i) and result[t].second is b(t, i)
          */
-        std::vector<std::pair<double, double> >
+        std::vector<std::vector<std::pair<double, double> > >
         CalcForwardBackwardProbabiliies(const Model& model, const ExperimentData& data);
     };
 
