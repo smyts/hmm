@@ -64,6 +64,13 @@ int main(int argc, char* argv[])
     }
 
     // secton: run and estimate viterbi predictions
+    std::vector<size_t> mostProbableSeq = HMM::Algorithms::FindMostProbableStateSequence(model, data);
+
+    std::cout << "Most probable sequence: " << std::endl;
+    for (size_t i = 0; i < mostProbableSeq.size(); ++i) {
+        std::cout << mostProbableSeq[i] << " ";
+    }
+    std::cout << std::endl;
 
     // section: run and estimate forward-backward predictions
 

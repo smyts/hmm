@@ -28,6 +28,7 @@ namespace HMM
             std::map<std::string, size_t> stateNameToIndex;
 
             /// element[i][j] here is the probability of transition from state i to j
+            /// very first state is the begin state, the last is the end state
             std::vector<std::vector<double> > transitionProb;
 
             /// element[i][j] here is the probability to emit symbol j from state i
