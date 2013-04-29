@@ -35,7 +35,7 @@ namespace
 
 void Model::ReadModel(std::istream& modelSource)
 {
-    // part: states reading
+    // section: states reading
     size_t nstates;
     string stateName;
 
@@ -51,10 +51,10 @@ void Model::ReadModel(std::istream& modelSource)
         stateIndexToName.push_back(stateName);
     }
 
-    // part: alphabet reading
+    // section: alphabet reading
     modelSource >> alphabetSize;
 
-    // part: transitions reading
+    // section: transitions reading
     size_t ntransitions;
     string targetStateName;
 
@@ -79,7 +79,7 @@ void Model::ReadModel(std::istream& modelSource)
         transitionProb[fromInd][toInd] = prob;
     }
 
-    // part: state-symbol emission probabilities reading
+    // section: state-symbol emission probabilities reading
     size_t nemissions;
     string symbol; // supposed to be single character, string is used for simpler reading code
 
@@ -127,7 +127,6 @@ void ExperimentData::ReadExperimentData(const Model& model, std::istream& dataSo
 
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Algorithms namespace definitions >>>>>>>>>>>>>>>>>>>>>>>>>>
-const double HMM_BEGIN_STATE_PROBABILITY = 1.0;
 const size_t HMM_UNDEFINED_STATE = -1;
 
 /**
@@ -248,7 +247,7 @@ namespace
 vector<size_t>
 HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const ExperimentData& data)
 {
-    // part: prepare and initialize data structures for calculations
+    // section: prepare and initialize data structures for calculations
     size_t nstates = model.transitionProb.size();
     size_t maxtime = data.timeStateSymbol.size();
 
@@ -270,7 +269,7 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
     vector<vector<size_t> > prevSeqState(maxtime,
                                          vector<size_t> (nstates, HMM_UNDEFINED_STATE));
 
-    // part: calculate probabilities for Viterbi algorithm using dynamic programming approach
+    // section: calculate probabilities for Viterbi algorithm using dynamic programming approach
     for (size_t t = 0; t < maxtime; ++t) {
         for (size_t curState = 0; curState < nstates; ++curState) {
             size_t curSymbol = std::get<2> (data.timeStateSymbol[t]);
@@ -286,7 +285,7 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
         }
     }
 
-    // part: collect most probable sequence in the reverse order
+    // section: collect most probable sequence in the reverse order
     vector<size_t> mostProbableSeq;
     ptrdiff_t curStep = maxtime - 1;
 
@@ -302,7 +301,7 @@ HMM::Algorithms::FindMostProbableStateSequence(const Model& model, const Experim
 
     mostProbableSeq.push_back(curState);
 
-    // part: restore correct order and return results
+    // section: restore correct order and return results
     std::reverse(std::begin(mostProbableSeq), std::end(mostProbableSeq));
 
     return std::move(mostProbableSeq);
@@ -321,7 +320,7 @@ HMM::Algorithms::CalcForwardBackwardProbabiliies(const Model& model, const Exper
      */
     vector<vector<double> > forwardStateProbability(maxtime, vector<double> (nstates, 0));
 
-    // part: calculate forward probabilities of the forward-backward algorithm
+    // section: calculate forward probabilities of the forward-backward algorithm
     for (size_t t = 0; t < maxtime; ++t) {
         for (size_t curState = 0; curState < nstates; ++curState) {
             double cumulativePrevProbability =
@@ -338,7 +337,7 @@ HMM::Algorithms::CalcForwardBackwardProbabiliies(const Model& model, const Exper
      */
     vector<vector<double> > backwardStateProbability(maxtime, vector<double> (nstates, 0.));
 
-    // part: calculate backward probabilities of the forward-backward algorithm
+    // section: calculate backward probabilities of the forward-backward algorithm
     for (ptrdiff_t t = maxtime - 1; t >= 0; --t) {
         for (size_t curState = 0; curState < nstates; ++curState) {
             double cumulativeNextProbability =
@@ -348,7 +347,7 @@ HMM::Algorithms::CalcForwardBackwardProbabiliies(const Model& model, const Exper
         }
     }
 
-    // part: return joined results
+    // section: return joined results
     vector<vector<pair<double, double> > > forwardBackwardProbability
         (maxtime, vector<pair<double, double> > (nstates, pair<double, double>()));
 
@@ -414,7 +413,7 @@ HMM::Estimation::GetStatePredictionEstimations(const vector<vector<size_t> >& co
     vector<size_t> colSums(nstates, 0);
     vector<size_t> rowSums(nstates, 0);
 
-    // part: prepare auxiliary columns sums and row sums for further usage
+    // section: prepare auxiliary columns sums and row sums for further usage
     for (size_t i = 0; i < nstates; ++i) {
         for (size_t j = 0; j < nstates; ++j) {
             rowSums[i] += confusionMatrix[i][j];
@@ -425,7 +424,7 @@ HMM::Estimation::GetStatePredictionEstimations(const vector<vector<size_t> >& co
     size_t totalObservations = std::accumulate(std::begin(rowSums),
                                                std::end(rowSums), 0UL);
 
-    // part: calculate prediction estimations for each state
+    // section: calculate prediction estimations for each state
     for (size_t state = 0; state < nstates; ++state) {
         estimations[state].truePositives = confusionMatrix[state][state];
         estimations[state].falsePositives = rowSums[state] - confusionMatrix[state][state];

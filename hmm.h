@@ -7,19 +7,27 @@
 #include <vector>
 #include <iostream>
 
+
+/**
+ * \note
+ * Data structures structures, algorithms and prediction estimation for hidden markov models.
+ */
 namespace HMM
 {
     namespace Data
     {
+        /**
+         * \brief Represents hidden markov model description
+         */
         struct Model
         {
             /**
              * \brief Read model description from the stream
              *
              * \details 
-             * Constructor reads model description according to the specification file.
+             * It reads model description according to the specification file.
              * \note
-             * It is supposed that stream is correct and contains all necessary data.
+             * It is supposed that the source stream is correct and contains all necessary data.
              * In order to catch errors make sure to enable exceptions for the stream before passing it here.
              */
             void ReadModel(std::istream& modelSource);
@@ -33,7 +41,6 @@ namespace HMM
             /// inverse conversion
             std::vector<std::string> stateIndexToName;
 
-
             /// element[i][j] here is the probability of transition from state i to j
             /// very first state is the begin state, the last is the end state
             std::vector<std::vector<double> > transitionProb;
@@ -42,15 +49,18 @@ namespace HMM
             std::vector<std::vector<double> > stateSymbolProb;
         };
 
+        /**
+         * \brief Represents experiment data for some particular model
+         */
         struct ExperimentData
         {
             /**
              * \brief Read experiment data from the stream
              *
              * \details 
-             * Constructor reads experiment data according to the specification file.
+             * It reads experiment data according to the specification file.
              * \note
-             * It is supposed that stream is correct and contains all necessary data.
+             * It is supposed that the source stream is correct and contains all necessary data.
              * In order to catch errors make sure to enable exceptions for the stream before passing it here.
              */
             void ReadExperimentData(const Model& model, std::istream& dataSource);
@@ -60,9 +70,7 @@ namespace HMM
         };
 
         /**
-         * \note
-         * Estimation in the form:
-         * True positives, False Positives, True Negatives, False Negatives, F-measure
+         * \brief State prediction estimation results for different hidden markov models algorithms
          */
         struct PredictionEstimation
         {
@@ -102,7 +110,8 @@ namespace HMM
          * beta  -> b(t, i) is the dependent probability of the i-th
          * hidden state based on the last t+1..END symbols.
          *
-         * \returns vector result[t], where result[t].first is a(t, i) and result[t].second is b(t, i)
+         * \returns vector result[t][i], where result[t][i].first is a(t, i)
+         *          and result[t][i].second is b(t, i)
          */
         std::vector<std::vector<std::pair<double, double> > >
         CalcForwardBackwardProbabiliies(const Model& model, const ExperimentData& data);
@@ -135,6 +144,8 @@ namespace HMM
 
         /**
          * \brief Use confusion matrix to calculate estimations of the prediction results
+         *
+         * \returns vector of prediction estimations for each state
          */
         vector<PredictionEstimation>
             GetStatePredictionEstimations(const vector<vector<size_t> >& confusionMatrix);
