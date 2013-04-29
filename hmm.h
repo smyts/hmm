@@ -1,3 +1,6 @@
+#ifndef HMM_H
+#define HMM_H
+
 #include <map>
 #include <tuple>
 #include <utility>
@@ -137,3 +140,5 @@ namespace HMM
             GetStatePredictionEstimations(const vector<vector<size_t> >& confusionMatrix);
     };
 };
+
+#endif // HMM_H
